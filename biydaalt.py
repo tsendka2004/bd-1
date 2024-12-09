@@ -1,58 +1,88 @@
-# Тогтмол утгуудыг тодорхойлно
-weeks_per_year = 39  # Хичээлийн жилд 39 долоо хоног гэж үзнэ (9 сарын 1-нээс 6 сарын 1 хүртэл)
+import random  # Санамсаргүй тоо үүсгэх модуль
+from collections import deque  # Дараалал хэрэгжүүлэх модуль
+import time  # Цаг хугацаа хэмжих модуль
 
-# Нийт судалгааны цагийг тооцох функц
-def calculate_total_hours(study_years, daily_hours, weekly_days, session_minutes):
-    session_hours = session_minutes / 60  # Нэг цагийн үргэлжлэх хугацааг минутаас цагт шилжүүлнэ
-    return study_years * weeks_per_year * weekly_days * daily_hours * session_hours
+VERTICES = 500  # Графын оройн тоо
 
-# Сонирхсон хичээлийн цагийг тооцоолох функц
-def calculate_interest_hours(study_years, weekly_interest_hours):
-    return study_years * weeks_per_year * weekly_interest_hours
+# Графт хоёр оройн хооронд зах байгаа эсэхийг шалгах функц
+def has_edge(edge_array, source, target):
+    for edge in edge_array:  # Бүх захыг шалгана
+        if (edge[0] == source and edge[1] == target) or (edge[0] == target and edge[1] == source):  # Эсрэг чиглэлтэй захыг мөн шалгана
+            return True  # Зах байвал үнэн утга буцаана
+    return False  # Зах байхгүй бол худал утга буцаана
 
-# Дадлагын хувь тооцоолох функц
-def calculate_internship_percentage(uni_years, internship_weeks):
-    total_study_weeks = weeks_per_year * uni_years  # Нийт хичээлийн долоо хоногийн тоо
-    return (internship_weeks * uni_years) / total_study_weeks * 100  # Дадлагын эзлэх хувийг олно
+# хайлт (BFS Дараалсан оройн хайлт) алгоритм
+def bfs(edge_array, start):
+    visited = [False] * VERTICES  # Орой тус бүрийн холболтын төлөвийг хадгалах жагсаалт
+    queue = deque([start])  # BFS-ийн дарааллыг эхлүүлнэ
+    visited[start] = True  # Эхлэх оройг visit гэж тэмдэглэнэ
 
-# Цаг, өдөр, дадлагын сонголт бүхий меню
-def menu():
-    while True:
-        print("\n== Хичээлийн цаг тооцоолох систем ==")
-        print("1. Нийт судалгааны цаг тооцоолох")
-        print("2. Сонирхсон хичээлийн цаг тооцоолох")
-        print("3. Дадлагын хувийг тооцоолох")
-        print("4. Гарах")
+    while queue:  # Дараалал хоосон биш бол
+        current = queue.popleft()  # Дарааллын эхний элементийг авна
+        for edge in edge_array:  # Бүх захыг шалгана
+            neighbor = -1  # Хөрш орой хадгалах хувьсагч
+            if edge[0] == current:  # Одоогийн оройтой холбогдсон зах байвал
+                neighbor = edge[1]
+            elif edge[1] == current:
+                neighbor = edge[0]
+            
+            if neighbor != -1 and not visited[neighbor]:  # Хөрш оройтой холбогдоогүй бол
+                queue.append(neighbor)  # Хөрш оройг дараалалд нэмнэ
+                visited[neighbor] = True  # Холбогдсон гэж тэмдэглэнэ
+
+# BFS-ийн хугацааг хэмжих функц
+def measure_bfs(edge_array):
+    start_time = time.perf_counter()  # Алгоритмын эхлэх хугацааг хэмжинэ (секундээр)
+    bfs(edge_array, 0)  # BFS алгоритмыг гүйцэтгэнэ
+    end_time = time.perf_counter()  # Алгоритмын дуусах хугацааг хэмжинэ
+    return end_time - start_time  # Үргэлжлэх хугацааг секундээр буцаана
+
+# (DFS Гүн замын хайлт) алгоритм
+def dfs(edge_array, current, visited):
+    visited[current] = True  # Одоогийн оройг холбогдсон гэж тэмдэглэнэ
+    for edge in edge_array:  # Бүх захыг шалгана
+        neighbor = -1  # Хөрш орой хадгалах хувьсагч
+        if edge[0] == current:  # Одоогийн оройтой холбогдсон зах байвал
+            neighbor = edge[1]
+        elif edge[1] == current:
+            neighbor = edge[0]
         
-        choice = input("Сонголтоо хийнэ үү (1-4): ")
+        if neighbor != -1 and not visited[neighbor]:  # Хөрш оройтой холбогдоогүй бол
+            dfs(edge_array, neighbor, visited)
 
-        if choice == '1':
-            study_years = int(input("Судалсан жил: "))
-            daily_hours = float(input("Өдөрт хичээллэх цаг: "))
-            weekly_days = int(input("7 хоногт хичээллэх өдөр: "))
-            session_minutes = int(input("Нэг цагийн үргэлжлэх хугацаа (минутаар): "))
-            total_hours = calculate_total_hours(study_years, daily_hours, weekly_days, session_minutes)
-            print(f"\nНийт судалсан цаг: {total_hours:.2f} цаг\n")
+# DFS-ийн хугацааг хэмжих функц
+def measure_dfs(edge_array):
+    start_time = time.perf_counter()  # Алгоритмын эхлэх хугацааг хэмжинэ (секундээр)
+    dfs(edge_array, 0, [False] * VERTICES)  # DFS алгоритмыг гүйцэтгэнэ
+    end_time = time.perf_counter()  # Алгоритмын дуусах хугацааг хэмжинэ
+    return end_time - start_time  # Үргэлжлэх хугацааг секундээр буцаана
 
-        elif choice == '2':
-            study_years = int(input("Судалсан жил: "))
-            weekly_interest_hours = float(input("7 хоногт сонирхсон хичээлд зарцуулсан цаг: "))
-            interest_hours = calculate_interest_hours(study_years, weekly_interest_hours)
-            print(f"\nНийт сонирхсон хичээлд зарцуулсан цаг: {interest_hours:.2f} цаг\n")
+# Захуудыг хэвлэх функц
+def print_edge_array(edge_array):
+    for edge in edge_array:  # Бүх захыг шалгана
+        print(f"{edge[0]} - {edge[1]}")  # Захыг хэвлэнэ
 
-        elif choice == '3':
-            uni_years = int(input("Их сургуулийн жил: "))
-            internship_weeks = int(input("Дадлагын долоо хоног: "))
-            internship_percentage = calculate_internship_percentage(uni_years, internship_weeks)
-            print(f"\nДадлагын эзлэх хувь: {internship_percentage:.2f}%\n")
+# Гол програм
+if __name__ == "__main__":
+    overall_start_time = time.perf_counter()
 
-        elif choice == '4':
-            print("Программыг хаалаа.")
-            break
+    # Захуудын жагсаалтыг үүсгэх
+    edge_array = []
 
-        else:
-            print("Буруу сонголт. Дахин оролдоно уу.")
+    # Графыг санамсаргүй байдлаар үүсгэх
+    for i in range(VERTICES):  # Бүх оргилуудад зориулж
+        degree = random.randint(1, 10)  # Орой тус бүрийн холболтын тоог санамсаргүйгээр үүсгэнэ
+        for _ in range(degree):  # Холболтуудыг үүсгэнэ
+            neighbor = random.randint(0, VERTICES - 1)  # Санамсаргүй холбогдсон орой сонгоно
+            if i != neighbor and not has_edge(edge_array, i, neighbor):  # Өөртэйгөө холбогдохгүй ба давхардсан зах үүсгэхгүй
+                edge_array.append([i, neighbor])
+                
+    print("Массивт жагсаалт:") 
+    print_edge_array(edge_array)
 
-# Программыг
-menu()
-#12:50
+    print("\nЦагын хэмжилтүүд:")  
+    print(f"Дараалсан оройн хайлтын хугацаа: {measure_bfs(edge_array)} секунд")
+    print(f"Гүн замын хайлтын хугацаа: {measure_dfs(edge_array)} секунд")
+
+    overall_end_time = time.perf_counter()
+    print(f"\nПрограммын ажиллах хугацаа: {overall_end_time - overall_start_time} секунд")
